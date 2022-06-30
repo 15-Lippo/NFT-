@@ -1,0 +1,6 @@
+git_script.sh
+node_modules
+artifacts
+cache
+.env
+
