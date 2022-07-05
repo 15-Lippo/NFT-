@@ -46,7 +46,7 @@ contract NFTUnboxed is ReentrancyGuard {
 
     modifier notListed(address nftAddress, uint256 tokenId) {
         Item memory item = s_items[nftAddress][tokenId];
-        if (item.price <= 0) revert NFTUnboxed__AlreadyListed();
+        if (item.price > 0) revert NFTUnboxed__AlreadyListed();
         _;
     }
 
@@ -62,7 +62,7 @@ contract NFTUnboxed is ReentrancyGuard {
 
     modifier isListed(address nftAddress, uint256 tokenId) {
         Item memory item = s_items[nftAddress][tokenId];
-        if (item.price > 0) revert NFTUnboxed__NotListed();
+        if (item.price <= 0) revert NFTUnboxed__NotListed();
         _;
     }
 
@@ -97,7 +97,7 @@ contract NFTUnboxed is ReentrancyGuard {
         external
         payable
         nonReentrant
-        notListed(nftAddress, tokenId)
+        isListed(nftAddress, tokenId)
     {
         Item memory item = s_items[nftAddress][tokenId];
         if (msg.value < item.price) revert NFTUnboxed__NotEnoughPrice();
@@ -128,7 +128,7 @@ contract NFTUnboxed is ReentrancyGuard {
     {
         if (newPrice <= 0) revert NFTUnboxed__PriceMustBeGreaterThanZero();
         Item memory item = s_items[nftAddress][tokenId];
-        item.price = newPrice;
+        s_items[nftAddress][tokenId].price = newPrice;
         emit ItemListed(msg.sender, nftAddress, tokenId, item.price);
     }
 
