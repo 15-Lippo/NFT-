@@ -1,25 +1,31 @@
-const { ethers } = require("hardhat");
+const { ethers } = require("hardhat")
 const { moveBlocks } = require("../utils/move-blocks")
-const PRICE = ethers.utils.parseEther("0.1");
+
+const PRICE = ethers.utils.parseEther("0.1")
 
 async function mintAndListNFT() {
-  const nftUnboxed = await ethers.getContract("NFTUnboxed");
-  const basicNft = await ethers.getContract("BasicNft");
-  console.log("Minting NFT...");
-  const mintTx = await basicNft.mintNft();
-  const mintTxReceipt = await mintTx.wait(1);
-  const tokenId = mintTxReceipt.events[0].args.tokenId;
-  console.log("Approving NFT...");
-  const approvalTx = await basicNft.approve(nftUnboxed.address, tokenId);
-  await approvalTx.wait(1);
-  console.log("Listing NFT...");
-  const tx = await nftUnboxed.listItem(basicNft.address, tokenId, PRICE);
-  await tx.wait(1);
+  const nftMarketplace = await ethers.getContract("NftMarketplace")
+  const basicNft = await ethers.getContract("BasicNft")
+
+  console.log("Minting NFT...")
+  const mintTx = await basicNft.mintNft()
+  const mintTxReceipt = await mintTx.wait(1)
+  const tokenId = mintTxReceipt.events[0].args.tokenId
+
+  console.log("Approving NFT...")
+  const approvalTx = await basicNft.approve(nftMarketplace.address, tokenId)
+  await approvalTx.wait(1)
+
+  console.log("Listing NFT...")
+  const tx = await nftMarketplace.listItem(basicNft.address, tokenId, PRICE)
+  await tx.wait(1)
+
   if (network.config.chainId == 31337) {
     // Moralis has a hard time if you move more than 1 at once!
     await moveBlocks(1, (sleepAmount = 1000))
   }
-  console.log("NFT Listed!");
+
+  console.log("NFT Listed!")
 }
 
 mintAndListNFT()
