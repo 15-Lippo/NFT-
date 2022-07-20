@@ -1,8 +1,8 @@
 const { frontEndContractsFile, frontEndAbiLocation } = require("../helper-hardhat-config")
-
 require("dotenv").config()
 const fs = require("fs")
 const { ethers, network } = require("hardhat")
+const deployNftCollection = require("../scripts/deploy-nft-collections")
 
 module.exports = async () => {
   if (process.env.UPDATE_FRONT_END) {
@@ -25,19 +25,20 @@ async function updateAbi() {
     `${frontEndAbiLocation}BasicNft.json`,
     basicNft.interface.format(ethers.utils.FormatTypes.json)
   )
+
+  const nftCollection = await ethers.getContract("NftCollection")
+  fs.writeFileSync(
+    `${frontEndAbiLocation}NftCollection.json`,
+    nftCollection.interface.format(ethers.utils.FormatTypes.json)
+  )
 }
 
 async function updateContractAddresses() {
   const chainId = network.config.chainId.toString()
   const nftMarketplace = await ethers.getContract("NftMarketplace")
   const contractAddresses = JSON.parse(fs.readFileSync(frontEndContractsFile, "utf8"))
-  if (chainId in contractAddresses) {
-    if (!contractAddresses[chainId]["NftMarketplace"].includes(nftMarketplace.address)) {
-      contractAddresses[chainId]["NftMarketplace"].push(nftMarketplace.address)
-    }
-  } else {
-    contractAddresses[chainId] = { NftMarketplace: [nftMarketplace.address] }
-  }
+  contractAddresses[chainId] = await deployNftCollection()
+  contractAddresses[chainId]["NftMarketplace"] = nftMarketplace.address
   fs.writeFileSync(frontEndContractsFile, JSON.stringify(contractAddresses))
 }
 
